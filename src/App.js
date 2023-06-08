@@ -1,13 +1,12 @@
 
 import './App.css';
 
-import ProductListingPage from './ProductListingPage';
+import Page from './ProductListingPage';
 
 const App = () => {
   return (
     <div>
-      <h1 className='center'>Product Listing Page</h1>
-      <ProductListingPage />
+      <Page />
     </div>
   );
 };

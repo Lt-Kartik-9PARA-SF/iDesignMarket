@@ -1,44 +1,105 @@
-import React, { useEffect, useState } from 'react';
-import LazyLoad from 'react-lazyload';
+import React, { useState } from 'react';
 
-const ProductListingPage = () => {
-  const [products, setProducts] = useState([]);
+const Seat = ({ seatNumber, isSelected }) => (
+  <div className={`seat ${isSelected ? 'selected' : ''}`}>
+    {seatNumber}
+  </div>
+);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+const Page = () => {
+  const totalSeats = 80;
+  const seatsPerRow = 7;
+  const totalRows = Math.ceil(totalSeats / seatsPerRow);
 
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch('https://dummyjson.com/products?limit=100');
-      const data = await response.json();
-      console.log(data);
-      setProducts(data.products);
-    } catch (error) {
-      console.error('Error fetching products:', error);
+  const [seats, setSeats] = useState(Array(totalSeats).fill(false));
+  const [numSeats, setNumSeats] = useState(0);
+
+  const handleSeatSelection = () => {
+    if(numSeats > 7){
+      alert('cant book more than 7 seats at once');
+      setNumSeats(0);
+      return;
     }
+    const selectedSeats = [];
+    let remainingSeats = numSeats;
+
+    for (let row = 0; row < totalRows; row++) {
+      for (let seat = 0; seat < seatsPerRow; seat++) {
+        const seatIndex = row * seatsPerRow + seat;
+
+        if (!seats[seatIndex]) {
+          selectedSeats.push(seatIndex);
+          remainingSeats--;
+
+          if (remainingSeats === 0) {
+            const newSeats = [...seats];
+            selectedSeats.forEach((seat) => {
+              newSeats[seat] = true;
+            });
+
+            setSeats(newSeats);
+            setNumSeats(0);
+            return;
+          }
+        }
+      }
+    }
+
+    alert('Not enough seats available.');
   };
 
-  return (
-    <div className="product-list">
-      {products.map((product) => (
-         <LazyLoad key={product.id} height={320}>
-        <div key={product.id} className="product-card">
-          <h3>{product.title}</h3>
-          <img src={product.thumbnail} alt={product.name} />
-          <p>Price: ${product.price}</p>
-          <p>{product.description}</p>
-          <p>Category: {product.category}</p>
-          <p className={product.stock < 50 ? 'stock low-stock' : 'stock'}>
-            Stock : {product.stock}
-          </p>
+  const renderSeats = () => {
+    const seatRows = [];
 
-          <p className={product.stock < 50 ? 'stock low-stock' : 'stock'}>{product.stock < 50 && <span> Hurry! Only a few items left.</span>}</p>
+    for (let row = 0; row < totalRows; row++) {
+      const rowSeats = [];
+
+      for (let seat = 0; seat < seatsPerRow; seat++) {
+        const seatIndex = row * seatsPerRow + seat;
+        rowSeats.push(
+          <Seat
+            key={seatIndex}
+            seatNumber={seatIndex + 1}
+            isSelected={seats[seatIndex]}
+          />
+        );
+      }
+
+      seatRows.push(
+        <div className="row" key={row}>
+          {rowSeats}
         </div>
-        </LazyLoad>
-      ))}
+      );
+    }
+
+    return seatRows;
+  };
+
+  const availableSeats = seats.filter((seat) => !seat).length;
+  const bookedSeats = seats.filter((seat) => seat).length;
+
+  return (
+    <div className="app">
+      <h1>Ticket Booking App</h1>
+      <div>
+        <input
+          type="number"
+          min={1}
+          max={7}
+          value={numSeats}
+          onChange={(e) => setNumSeats(parseInt(e.target.value))}
+        />
+        <button onClick={handleSeatSelection}>Book Seats</button>
+      </div>
+      <div className="seat-layout">
+        {renderSeats()}
+      </div>
+      <div className="seat-info">
+        <p>Available Seats: {availableSeats}</p>
+        <p>Booked Seats: {bookedSeats}</p>
+      </div>
     </div>
   );
 };
 
-export default ProductListingPage;
+export default Page;
